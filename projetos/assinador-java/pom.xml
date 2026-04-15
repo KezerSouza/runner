@@ -9,6 +9,7 @@
     <version>1.0.0-SNAPSHOT</version>
 
     <properties>
+        <!-- Especificação exige Java 21; ambiente local tem Java 17 -->
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -36,6 +37,19 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.2.5</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.3.0</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <mainClass>com.kyriosdata.assinador.Main</mainClass>
+                        </manifest>
+                    </archive>
+                    <finalName>assinador</finalName>
+                </configuration>
             </plugin>
         </plugins>
     </build>
