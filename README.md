@@ -33,3 +33,10 @@ O sistema foi projetado para abstrair a complexidade envolvida na execução man
 * **Automação de Execução:** O sistema localiza automaticamente o Java e o arquivo `.jar`, simplificando a configuração do ambiente.
 
 ---
+
+## 4. Tecnologias Utilizadas
+- Java 21
+- Maven
+- Cobra CLI
+- Git e GitHub
+- GitHub Actions
