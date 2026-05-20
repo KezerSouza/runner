@@ -6,6 +6,8 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+
+	"github.com/kyriosdata/assinatura/internal/jdk"
 )
 
 // Response representa a resposta JSON do assinador.jar.
@@ -42,9 +44,9 @@ func Validate(content, signature string) (*Response, error) {
 }
 
 func invoke(args []string) (*Response, error) {
-	java, err := findJava()
+	java, err := jdk.Ensure()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("JDK não disponível: %w", err)
 	}
 
 	jar, err := findJar()
@@ -66,21 +68,6 @@ func invoke(args []string) (*Response, error) {
 		return nil, fmt.Errorf("resposta inválida do assinador: %w", err)
 	}
 	return &resp, nil
-}
-
-func findJava() (string, error) {
-	if javaHome := os.Getenv("JAVA_HOME"); javaHome != "" {
-		java := filepath.Join(javaHome, "bin", "java")
-		if _, err := os.Stat(java); err == nil {
-			return java, nil
-		}
-	}
-
-	java, err := exec.LookPath("java")
-	if err != nil {
-		return "", fmt.Errorf("JDK não encontrado: instale o Java 21 ou defina JAVA_HOME")
-	}
-	return java, nil
 }
 
 func findJar() (string, error) {
