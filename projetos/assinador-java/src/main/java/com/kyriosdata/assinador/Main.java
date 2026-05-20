@@ -13,6 +13,24 @@ public class Main {
         }
 
         String operation = args[0];
+
+        if ("server".equals(operation)) {
+            int port = 8080;
+            int timeout = 0;
+            for (int i = 1; i < args.length; i++) {
+                if ("--port".equals(args[i]) && i + 1 < args.length) port = Integer.parseInt(args[++i]);
+                if ("--timeout".equals(args[i]) && i + 1 < args.length) timeout = Integer.parseInt(args[++i]);
+            }
+            try {
+                new AssinadorServer(port, timeout).start();
+                Thread.currentThread().join();
+            } catch (Exception e) {
+                System.err.println("Erro ao iniciar servidor: " + e.getMessage());
+                System.exit(1);
+            }
+            return;
+        }
+
         String content = null;
         String token = null;
         String signature = null;
@@ -45,26 +63,11 @@ public class Main {
                 response = service.validate(new ValidateRequest(content, signature));
                 break;
             default:
-                System.err.println("Operação desconhecida: " + operation + ". Use 'sign' ou 'validate'.");
+                System.err.println("Operação desconhecida: " + operation + ". Use 'sign', 'validate' ou 'server'.");
                 System.exit(2);
                 return;
         }
 
-        System.out.println(toJson(response));
-    }
-
-    private static String toJson(SignatureResponse r) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("{");
-        sb.append("\"signature\":").append(jsonString(r.getSignature())).append(",");
-        sb.append("\"valid\":").append(r.isValid()).append(",");
-        sb.append("\"message\":").append(jsonString(r.getMessage()));
-        sb.append("}");
-        return sb.toString();
-    }
-
-    private static String jsonString(String s) {
-        if (s == null) return "null";
-        return "\"" + s.replace("\\", "\\\\").replace("\"", "\\\"") + "\"";
+        System.out.println(response.toJson());
     }
 }

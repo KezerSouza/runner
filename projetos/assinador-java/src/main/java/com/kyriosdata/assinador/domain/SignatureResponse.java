@@ -22,4 +22,17 @@ public class SignatureResponse {
     public String getMessage() {
         return message;
     }
+
+    public String toJson() {
+        return "{" +
+            "\"signature\":" + jsonString(signature) + "," +
+            "\"valid\":" + valid + "," +
+            "\"message\":" + jsonString(message) +
+            "}";
+    }
+
+    private static String jsonString(String s) {
+        if (s == null) return "null";
+        return "\"" + s.replace("\\", "\\\\").replace("\"", "\\\"") + "\"";
+    }
 }
