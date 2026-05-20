@@ -40,3 +40,10 @@ O sistema foi projetado para abstrair a complexidade envolvida na execução man
 - Cobra CLI
 - Git e GitHub
 - GitHub Actions
+
+## 5. Entregáveis
+- Código-fonte da CLI
+- Código-fonte do assinador.jar
+- Testes unitários e de integração
+- Documentação completa
+- Binários multiplataforma
