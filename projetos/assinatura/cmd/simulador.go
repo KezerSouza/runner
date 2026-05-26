@@ -17,7 +17,7 @@ var simuladorCmd = &cobra.Command{
 }
 
 // Inicia o simulador
-var startCmd = &cobra.Command{
+var simStartCmd = &cobra.Command{
 	Use:   "start",
 	Short: "Inicia o simulador",
 	RunE: func(cmd *cobra.Command, args []string) error {
@@ -31,7 +31,7 @@ var startCmd = &cobra.Command{
 }
 
 // Encerra o simulador
-var stopCmd = &cobra.Command{
+var simStopCmd = &cobra.Command{
 	Use:   "stop",
 	Short: "Encerra o simulador",
 	RunE: func(cmd *cobra.Command, args []string) error {
@@ -45,7 +45,7 @@ var stopCmd = &cobra.Command{
 }
 
 // Exibe status atual
-var statusCmd = &cobra.Command{
+var simStatusCmd = &cobra.Command{
 	Use:   "status",
 	Short: "Exibe status do simulador",
 	RunE: func(cmd *cobra.Command, args []string) error {
@@ -63,11 +63,11 @@ var statusCmd = &cobra.Command{
 
 // Registra comandos no CLI principal
 func init() {
-	startCmd.Flags().IntVar(&port, "port", 8443, "Porta do simulador")
+	simStartCmd.Flags().IntVar(&port, "port", 8443, "Porta do simulador")
 
-	simuladorCmd.AddCommand(startCmd)
-	simuladorCmd.AddCommand(stopCmd)
-	simuladorCmd.AddCommand(statusCmd)
+	simuladorCmd.AddCommand(simStartCmd)
+	simuladorCmd.AddCommand(simStopCmd)
+	simuladorCmd.AddCommand(simStatusCmd)
 
 	rootCmd.AddCommand(simuladorCmd)
 }
