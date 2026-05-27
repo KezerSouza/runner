@@ -2,6 +2,7 @@ package jdk
 
 import (
 	"archive/tar"
+	"archive/zip"
 	"compress/gzip"
 	"fmt"
 	"io"
@@ -168,8 +169,12 @@ func download() (string, error) {
 		if err := extractTarGz(tmpPath, base); err != nil {
 			return "", fmt.Errorf("erro ao extrair JDK: %w", err)
 		}
+	case ".zip":
+		if err := extractZip(tmpPath, base); err != nil {
+			return "", fmt.Errorf("erro ao extrair JDK: %w", err)
+		}
 	default:
-		return "", fmt.Errorf("extração de %s não implementada nesta plataforma; instale o JDK 21 manualmente", ext)
+		return "", fmt.Errorf("formato de arquivo não suportado: %s", ext)
 	}
 
 	java, ok := findIn(base)
@@ -179,6 +184,53 @@ func download() (string, error) {
 
 	fmt.Fprintln(os.Stderr, "JDK 21 instalado com sucesso.")
 	return java, nil
+}
+
+func extractZip(src, destDir string) error {
+	r, err := zip.OpenReader(src)
+	if err != nil {
+		return fmt.Errorf("erro ao abrir zip: %w", err)
+	}
+	defer r.Close()
+
+	clean := filepath.Clean(destDir) + string(os.PathSeparator)
+
+	for _, f := range r.File {
+		target := filepath.Join(destDir, filepath.FromSlash(f.Name))
+		if !strings.HasPrefix(target, clean) {
+			return fmt.Errorf("entrada zip suspeita (path traversal): %s", f.Name)
+		}
+
+		if f.FileInfo().IsDir() {
+			if err := os.MkdirAll(target, f.Mode()); err != nil {
+				return err
+			}
+			continue
+		}
+
+		if err := os.MkdirAll(filepath.Dir(target), 0755); err != nil {
+			return err
+		}
+
+		out, err := os.OpenFile(target, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, f.Mode())
+		if err != nil {
+			return err
+		}
+
+		rc, err := f.Open()
+		if err != nil {
+			out.Close()
+			return err
+		}
+
+		_, copyErr := io.Copy(out, rc)
+		rc.Close()
+		out.Close()
+		if copyErr != nil {
+			return copyErr
+		}
+	}
+	return nil
 }
 
 func extractTarGz(src, destDir string) error {

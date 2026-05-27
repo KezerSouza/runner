@@ -61,24 +61,33 @@ jobs:
             echo "TAG_EXISTS=false" >> $GITHUB_ENV
           fi
 
-      - name: Build
+      - name: Build assinatura
         env:
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
         run: go build -v -o assinatura-${{ env.VERSION }}-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.ext }} .
 
+      - name: Build simulador
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+        run: go build -v -o simulador-${{ env.VERSION }}-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.ext }} ./cmd/simulador/
+
       - name: Checksum e Assinatura dos Artefatos
         if: env.TAG_EXISTS == 'false'
         shell: bash
         run: |
-          FILE="assinatura-${{ env.VERSION }}-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.ext }}"
-          sha256sum "$FILE" > "$FILE.sha256"
-          cosign sign-blob --yes \
-            --output-certificate "$FILE.pem" \
-            --output-signature "$FILE.sig" \
-            "$FILE"
+          for FILE in \
+            "assinatura-${{ env.VERSION }}-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.ext }}" \
+            "simulador-${{ env.VERSION }}-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.ext }}"; do
+            sha256sum "$FILE" > "$FILE.sha256"
+            cosign sign-blob --yes \
+              --output-certificate "$FILE.pem" \
+              --output-signature "$FILE.sig" \
+              "$FILE"
+          done
 
-      - name: Upload Artifact
+      - name: Upload Artifact assinatura
         uses: actions/upload-artifact@v4
         with:
           name: assinatura-${{ env.VERSION }}-${{ matrix.goos }}-${{ matrix.goarch }}
@@ -87,6 +96,17 @@ jobs:
             projetos/assinatura/assinatura-${{ env.VERSION }}-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.ext }}.sha256*
             projetos/assinatura/assinatura-${{ env.VERSION }}-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.ext }}.pem*
             projetos/assinatura/assinatura-${{ env.VERSION }}-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.ext }}.sig*
+          retention-days: 7
+
+      - name: Upload Artifact simulador
+        uses: actions/upload-artifact@v4
+        with:
+          name: simulador-${{ env.VERSION }}-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: |
+            projetos/assinatura/simulador-${{ env.VERSION }}-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.ext }}
+            projetos/assinatura/simulador-${{ env.VERSION }}-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.ext }}.sha256*
+            projetos/assinatura/simulador-${{ env.VERSION }}-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.ext }}.pem*
+            projetos/assinatura/simulador-${{ env.VERSION }}-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.ext }}.sig*
           retention-days: 7
 
       - name: Publicar GitHub Release
@@ -101,3 +121,7 @@ jobs:
             projetos/assinatura/assinatura-${{ env.VERSION }}-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.ext }}.sha256
             projetos/assinatura/assinatura-${{ env.VERSION }}-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.ext }}.pem
             projetos/assinatura/assinatura-${{ env.VERSION }}-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.ext }}.sig
+            projetos/assinatura/simulador-${{ env.VERSION }}-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.ext }}
+            projetos/assinatura/simulador-${{ env.VERSION }}-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.ext }}.sha256
+            projetos/assinatura/simulador-${{ env.VERSION }}-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.ext }}.pem
+            projetos/assinatura/simulador-${{ env.VERSION }}-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.ext }}.sig
