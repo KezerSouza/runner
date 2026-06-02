@@ -53,6 +53,7 @@ jobs:
         run: |
           RAW_VERSION=$(grep -oP 'var version = "\K[^"]+' cmd/version.go)
           VERSION="v$RAW_VERSION"
+          echo "RAW_VERSION=$RAW_VERSION" >> $GITHUB_ENV
           echo "VERSION=$VERSION" >> $GITHUB_ENV
 
           if git ls-remote --tags origin | grep -q "refs/tags/$VERSION"; then
@@ -65,13 +66,13 @@ jobs:
         env:
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
-        run: go build -v -o assinatura-${{ env.VERSION }}-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.ext }} .
+        run: go build -v -ldflags "-X github.com/kyriosdata/assinatura/cmd.version=${{ env.RAW_VERSION }}" -o assinatura-${{ env.VERSION }}-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.ext }} .
 
       - name: Build simulador
         env:
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
-        run: go build -v -o simulador-${{ env.VERSION }}-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.ext }} ./cmd/simulador/
+        run: go build -v -ldflags "-X github.com/kyriosdata/assinatura/cmd.version=${{ env.RAW_VERSION }}" -o simulador-${{ env.VERSION }}-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.ext }} ./cmd/simulador/
 
       - name: Checksum e Assinatura dos Artefatos
         if: env.TAG_EXISTS == 'false'
