@@ -25,6 +25,7 @@ var versionCmd = &cobra.Command{
 }
 
 var startPort int
+var startSource string
 
 var startCmd = &cobra.Command{
 	Use:   "start",
@@ -36,9 +37,10 @@ ou se uma versão mais recente estiver disponível.
 
 Exemplos:
   simulador start
-  simulador start --port 9443`,
+  simulador start --port 9443
+  simulador start --source https://exemplo.com/simulador.jar`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if err := sim.Start(startPort); err != nil {
+		if err := sim.Start(startPort, startSource); err != nil {
 			return err
 		}
 		fmt.Printf("[OK] Simulador iniciado na porta %d\n", startPort)
@@ -85,6 +87,7 @@ Exemplos:
 
 func init() {
 	startCmd.Flags().IntVar(&startPort, "port", 8443, "Porta em que o Simulador irá escutar")
+	startCmd.Flags().StringVar(&startSource, "source", "", "URL alternativa para download do simulador.jar")
 	rootCmd.AddCommand(versionCmd, startCmd, stopCmd, statusCmd)
 }
 

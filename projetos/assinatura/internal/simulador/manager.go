@@ -1,6 +1,8 @@
 package simulador
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -30,6 +32,7 @@ type releaseManifest struct {
 	Jar struct {
 		URL     string `json:"url"`
 		Version string `json:"version"`
+		SHA256  string `json:"sha256,omitempty"`
 	} `json:"jar"`
 }
 
@@ -128,10 +131,38 @@ func downloadFile(url, dest string) error {
 	return os.Rename(tmp, dest)
 }
 
+func verifySHA256(path, expected string) error {
+	f, err := os.Open(path)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	h := sha256.New()
+	if _, err := io.Copy(h, f); err != nil {
+		return err
+	}
+	got := hex.EncodeToString(h.Sum(nil))
+	if got != strings.ToLower(expected) {
+		return fmt.Errorf("checksum SHA-256 divergente: esperado %s, obtido %s", expected, got)
+	}
+	return nil
+}
+
 // EnsureJar garante que simulador.jar está presente e atualizado.
-// Busca release.json para comparar versões; baixa apenas se necessário.
-func EnsureJar() (string, error) {
+// Se source for não-vazio, baixa diretamente dessa URL sem verificar versão.
+// Caso contrário, busca release.json para comparar versões e baixa apenas se necessário.
+func EnsureJar(source string) (string, error) {
 	jar := jarFile()
+
+	if source != "" {
+		fmt.Fprintf(os.Stderr, "Baixando simulador.jar de %s...\n", source)
+		if err := downloadFile(source, jar); err != nil {
+			return "", fmt.Errorf("erro ao baixar simulador.jar: %w", err)
+		}
+		_ = os.WriteFile(versionFile(), []byte("custom"), 0644)
+		fmt.Fprintln(os.Stderr, "simulador.jar baixado com sucesso.")
+		return jar, nil
+	}
 
 	manifest, err := fetchManifest()
 	if err != nil {
@@ -156,18 +187,27 @@ func EnsureJar() (string, error) {
 	if err := downloadFile(manifest.Jar.URL, jar); err != nil {
 		return "", fmt.Errorf("erro ao baixar simulador.jar: %w", err)
 	}
+
+	if manifest.Jar.SHA256 != "" {
+		if err := verifySHA256(jar, manifest.Jar.SHA256); err != nil {
+			_ = os.Remove(jar)
+			return "", fmt.Errorf("verificação de integridade falhou: %w", err)
+		}
+	}
+
 	_ = os.WriteFile(versionFile(), []byte(manifest.Jar.Version), 0644)
 	fmt.Fprintln(os.Stderr, "simulador.jar baixado com sucesso.")
 	return jar, nil
 }
 
 // Start inicia o simulador na porta indicada.
-func Start(port int) error {
+// source, se não-vazio, especifica uma URL alternativa para download do simulador.jar.
+func Start(port int, source string) error {
 	if !portFree(port) {
 		return fmt.Errorf("porta %d ocupada", port)
 	}
 
-	jar, err := EnsureJar()
+	jar, err := EnsureJar(source)
 	if err != nil {
 		return err
 	}

@@ -14,7 +14,7 @@ var versionCmd = &cobra.Command{
 	Short: "Exibe a versão atual do CLI",
 	Long:  `Exibe a versão atual do CLI assinatura e informações de sistema.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Printf("Assinatura CLI v%s %s/%s\n", version, runtime.GOOS, runtime.GOARCH)
+		fmt.Fprintf(cmd.OutOrStdout(), "Assinatura CLI v%s %s/%s\n", version, runtime.GOOS, runtime.GOARCH)
 	},
 }
 

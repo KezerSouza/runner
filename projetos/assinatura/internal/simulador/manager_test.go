@@ -1,9 +1,12 @@
 package simulador
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"net"
 	"os"
+	"path/filepath"
 	"testing"
 )
 
@@ -101,5 +104,50 @@ func TestLocalVersion_Written(t *testing.T) {
 	}
 	if v := localVersion(); v != "1.2.3" {
 		t.Errorf("localVersion() = %q; esperado %q", v, "1.2.3")
+	}
+}
+
+func TestVerifySHA256_Correto(t *testing.T) {
+	tmp := t.TempDir()
+	f := filepath.Join(tmp, "test.jar")
+	content := []byte("conteudo de teste")
+	if err := os.WriteFile(f, content, 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	h := sha256.New()
+	h.Write(content)
+	expected := hex.EncodeToString(h.Sum(nil))
+
+	if err := verifySHA256(f, expected); err != nil {
+		t.Errorf("verifySHA256() erro inesperado: %v", err)
+	}
+}
+
+func TestVerifySHA256_Incorreto(t *testing.T) {
+	tmp := t.TempDir()
+	f := filepath.Join(tmp, "test.jar")
+	if err := os.WriteFile(f, []byte("conteudo"), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	err := verifySHA256(f, "0000000000000000000000000000000000000000000000000000000000000000")
+	if err == nil {
+		t.Error("verifySHA256() deveria retornar erro para checksum incorreto")
+	}
+}
+
+func TestVerifySHA256_ArquivoInexistente(t *testing.T) {
+	err := verifySHA256("/nao/existe/arquivo.jar", "abc123")
+	if err == nil {
+		t.Error("verifySHA256() deveria retornar erro para arquivo inexistente")
+	}
+}
+
+func TestEnsureJar_SourceURL_ServidorIndisponivel(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+	_, err := EnsureJar("http://localhost:19998/simulador.jar")
+	if err == nil {
+		t.Error("EnsureJar com source inválido deveria retornar erro")
 	}
 }
