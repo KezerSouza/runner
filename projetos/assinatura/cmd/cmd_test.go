@@ -22,8 +22,10 @@ func TestVersionCmd_ExibeVersao(t *testing.T) {
 	if err != nil {
 		t.Fatalf("version retornou erro: %v", err)
 	}
-	if !strings.Contains(out, ".") {
-		t.Errorf("saída do version não contém número de versão: %q", out)
+	// Sem injeção de -ldflags (build de desenvolvimento), a variável version
+	// mantém o valor padrão "dev". Em release, o CI sobrescreve via ldflags.
+	if !strings.Contains(out, "dev") {
+		t.Errorf("saída do version não contém a versão de desenvolvimento %q: %q", "dev", out)
 	}
 }
 
