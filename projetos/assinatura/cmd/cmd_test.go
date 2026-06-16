@@ -4,11 +4,29 @@ import (
 	"bytes"
 	"strings"
 	"testing"
+
+	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 )
+
+// resetFlags restaura todas as flags de cmd (e subcomandos) ao valor padrão.
+// Os comandos Cobra são singletons de pacote, então, sem este reset, o estado
+// de uma flag (valor e marca Changed) vaza de um teste para o seguinte —
+// fazendo, por exemplo, MarkFlagRequired passar indevidamente.
+func resetFlags(cmd *cobra.Command) {
+	cmd.Flags().VisitAll(func(f *pflag.Flag) {
+		_ = f.Value.Set(f.DefValue)
+		f.Changed = false
+	})
+	for _, sub := range cmd.Commands() {
+		resetFlags(sub)
+	}
+}
 
 // runCLI executa o rootCmd com os args fornecidos e retorna a saída combinada e o erro.
 func runCLI(t *testing.T, args ...string) (string, error) {
 	t.Helper()
+	resetFlags(rootCmd)
 	buf := new(bytes.Buffer)
 	rootCmd.SetOut(buf)
 	rootCmd.SetErr(buf)
