@@ -4,6 +4,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -29,8 +30,17 @@ func TestIs21Plus_SystemJava(t *testing.T) {
 	if err != nil {
 		t.Skipf("java não encontrado no PATH: %v", err)
 	}
+	// Verifica a versão real antes de exigir Is21Plus; se não for 21+, pula.
+	out, _ := exec.Command(java, "-version").CombinedOutput()
+	version := string(out)
+	is21 := strings.Contains(version, `"21`) || strings.Contains(version, `"22`) ||
+		strings.Contains(version, `"23`) || strings.Contains(version, `"24`) ||
+		strings.Contains(version, `"25`) || strings.Contains(version, `"26`)
+	if !is21 {
+		t.Skipf("java do sistema não é 21+ — pulando (versão: %s)", strings.TrimSpace(version))
+	}
 	if !Is21Plus(java) {
-		t.Errorf("Is21Plus(%q) = false; ambiente requer Java 21+", java)
+		t.Errorf("Is21Plus(%q) = false para binário Java 21+", java)
 	}
 }
 
