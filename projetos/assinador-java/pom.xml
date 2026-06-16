@@ -36,6 +36,12 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.2.5</version>
+                <configuration>
+                    <environmentVariables>
+                        <!-- Aponta para arquivo de configuração criado pelo Pkcs11IntegrationTest -->
+                        <SOFTHSM2_CONF>${project.build.directory}/softhsm2-test.conf</SOFTHSM2_CONF>
+                    </environmentVariables>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

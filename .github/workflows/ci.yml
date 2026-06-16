@@ -50,6 +50,9 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
+      - name: Install SoftHSM2
+        run: sudo apt-get install -y softhsm2
+
       - name: Run Maven Tests
         run: mvn -B test
 
